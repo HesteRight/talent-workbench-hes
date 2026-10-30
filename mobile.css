@@ -84,3 +84,13 @@
   .split-timeline { flex-wrap:wrap; }
   .split-timeline>div { flex:1 1 100%!important; }
 }
+
+@media (max-width:700px) {
+  button,input,select,textarea { box-sizing:border-box; }
+  input[type=date],input[type=datetime-local] { appearance:none; -webkit-appearance:none; display:block; width:100%; min-width:0; height:44px!important; min-height:44px!important; max-height:44px; padding:8px 10px; line-height:26px; background:#fff; }
+  input[type=date]::-webkit-date-and-time-value,input[type=datetime-local]::-webkit-date-and-time-value { min-height:26px; line-height:26px; text-align:left; margin:0; padding:0; }
+  .toolbar>label { align-self:stretch; }
+  #analytics-root .wf-filters>label { display:flex; flex-direction:column; justify-content:flex-end; gap:8px; }
+  #analytics-root .wf-filters>label:first-child { grid-column:1/-1!important; }
+  .funnel-row { color:#242424; -webkit-appearance:none; appearance:none; border-radius:0; }
+}
