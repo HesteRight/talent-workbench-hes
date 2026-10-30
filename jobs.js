@@ -1,0 +1,299 @@
+// Verified against Kuaishou official social recruitment list on 2026-10-28.
+const jobCatalog=[
+  {
+    "id": "J-01",
+    "title": "视频生成算法工程师（1–3年）",
+    "officialTitle": "视频生成算法工程师-【可灵团队】",
+    "officialId": 23514,
+    "type": "社招",
+    "location": "北京",
+    "updatedAt": "2026-10-10",
+    "verifiedAt": "2026-10-28",
+    "sourceUrl": "https://zhaopin.kuaishou.cn/#/official/social/job-info/23514",
+    "sourceStatus": "官网列表检索可见",
+    "group": "视频生成",
+    "keywords": [
+      "视频生成",
+      "扩散模型"
+    ],
+    "directions": [
+      "多模态生成"
+    ],
+    "description": "可灵视频生成方向公开社招岗位。"
+  },
+  {
+    "id": "J-02",
+    "title": "视频生成算法工程师（3–5年）",
+    "officialTitle": "（可灵AI专项）视频生成算法工程师【北京/深圳】",
+    "officialId": 16903,
+    "type": "社招",
+    "location": "北京",
+    "updatedAt": "2026-10-09",
+    "verifiedAt": "2026-10-28",
+    "sourceUrl": "https://zhaopin.kuaishou.cn/#/official/social/job-info/16903",
+    "sourceStatus": "官网列表检索可见",
+    "group": "视频生成",
+    "keywords": [
+      "视频生成",
+      "预训练"
+    ],
+    "directions": [
+      "多模态生成"
+    ],
+    "description": "可灵视频生成方向公开社招岗位。"
+  },
+  {
+    "id": "J-03",
+    "title": "多模态视频生成算法专家",
+    "officialTitle": "多模态视频生成算法专家-【可灵团队】",
+    "officialId": 29610,
+    "type": "社招",
+    "location": "北京、深圳",
+    "updatedAt": "2026-07-01",
+    "verifiedAt": "2026-10-28",
+    "sourceUrl": "https://zhaopin.kuaishou.cn/#/official/social/job-info/29610",
+    "sourceStatus": "官网列表检索可见",
+    "group": "视频生成",
+    "keywords": [
+      "多模态",
+      "视频生成"
+    ],
+    "directions": [
+      "多模态生成"
+    ],
+    "description": "可灵视频生成方向公开社招岗位。"
+  },
+  {
+    "id": "J-04",
+    "title": "AIGC视觉生成算法工程师/专家",
+    "officialTitle": "（可灵AI专项）AIGC视觉生成算法工程师/专家 - 【北京】",
+    "officialId": 2974,
+    "type": "社招",
+    "location": "北京",
+    "updatedAt": "2026-07-01",
+    "verifiedAt": "2026-10-28",
+    "sourceUrl": "https://zhaopin.kuaishou.cn/#/official/social/job-info/2974",
+    "sourceStatus": "官网列表检索可见",
+    "group": "视频生成",
+    "keywords": [
+      "AIGC",
+      "视觉生成"
+    ],
+    "directions": [
+      "多模态生成"
+    ],
+    "description": "可灵视频生成方向公开社招岗位。"
+  },
+  {
+    "id": "J-05",
+    "title": "视频生成强化学习算法专家",
+    "officialTitle": "视频生成强化学习算法专家 -【可灵AI】",
+    "officialId": 25855,
+    "type": "社招",
+    "location": "北京",
+    "updatedAt": "2026-06-09",
+    "verifiedAt": "2026-10-28",
+    "sourceUrl": "https://zhaopin.kuaishou.cn/#/official/social/job-info/25855",
+    "sourceStatus": "官网列表检索可见",
+    "group": "视频生成",
+    "keywords": [
+      "视频生成",
+      "强化学习"
+    ],
+    "directions": [
+      "多模态生成"
+    ],
+    "description": "可灵视频生成方向公开社招岗位。"
+  },
+  {
+    "id": "J-06",
+    "title": "模型优化算法工程师",
+    "officialTitle": "模型优化算法工程师-【可灵AI专项】",
+    "officialId": 29606,
+    "type": "社招",
+    "location": "北京",
+    "updatedAt": "2026-07-09",
+    "verifiedAt": "2026-10-28",
+    "sourceUrl": "https://zhaopin.kuaishou.cn/#/official/social/job-info/29606",
+    "sourceStatus": "官网列表检索可见",
+    "group": "视频生成",
+    "keywords": [
+      "模型优化",
+      "生成加速"
+    ],
+    "directions": [
+      "多模态生成"
+    ],
+    "description": "可灵视频生成方向公开社招岗位。"
+  },
+  {
+    "id": "J-07",
+    "title": "多模态大模型算法工程师（AIGC）",
+    "officialTitle": "（可灵AI）多模态大模型算法工程师- 【AIGC】",
+    "officialId": 20962,
+    "type": "社招",
+    "location": "北京",
+    "updatedAt": "2026-07-01",
+    "verifiedAt": "2026-10-28",
+    "sourceUrl": "https://zhaopin.kuaishou.cn/#/official/social/job-info/20962",
+    "sourceStatus": "官网列表检索可见",
+    "group": "视频生成",
+    "keywords": [
+      "多模态",
+      "AIGC"
+    ],
+    "directions": [
+      "多模态生成"
+    ],
+    "description": "可灵视频生成方向公开社招岗位。"
+  },
+  {
+    "id": "J-08",
+    "title": "算法工程师（语音/音频/音乐方向）",
+    "officialTitle": "算法工程师（语音/音频/音乐方向）-【可灵AI专项】",
+    "officialId": 18195,
+    "type": "社招",
+    "location": "北京、深圳",
+    "updatedAt": "2026-10-12",
+    "verifiedAt": "2026-10-28",
+    "sourceUrl": "https://zhaopin.kuaishou.cn/#/official/social/job-info/18195",
+    "sourceStatus": "官网列表检索可见",
+    "group": "音频模型",
+    "keywords": [
+      "语音",
+      "音频",
+      "音乐"
+    ],
+    "directions": [
+      "音频生成"
+    ],
+    "description": "可灵音频模型方向公开社招岗位。"
+  },
+  {
+    "id": "J-09",
+    "title": "多模态理解算法工程师",
+    "officialTitle": "多模态理解算法工程师-【可灵AI】",
+    "officialId": 30654,
+    "type": "社招",
+    "location": "北京、深圳",
+    "updatedAt": "2026-10-20",
+    "verifiedAt": "2026-10-28",
+    "sourceUrl": "https://zhaopin.kuaishou.cn/#/official/social/job-info/30654",
+    "sourceStatus": "官网列表检索可见",
+    "group": "多模态理解",
+    "keywords": [
+      "多模态理解",
+      "模型"
+    ],
+    "directions": [
+      "多模态生成"
+    ],
+    "description": "可灵多模态理解方向公开社招岗位。"
+  },
+  {
+    "id": "J-10",
+    "title": "多模态理解与生成统一架构核心研究员",
+    "officialTitle": "多模态理解与生成统一架构核心研究员-【可灵AI】",
+    "officialId": 30354,
+    "type": "社招",
+    "location": "北京、深圳",
+    "updatedAt": "2026-06-09",
+    "verifiedAt": "2026-10-28",
+    "sourceUrl": "https://zhaopin.kuaishou.cn/#/official/social/job-info/30354",
+    "sourceStatus": "官网列表检索可见",
+    "group": "多模态理解",
+    "keywords": [
+      "理解与生成",
+      "统一架构"
+    ],
+    "directions": [
+      "多模态生成"
+    ],
+    "description": "可灵多模态理解方向公开社招岗位。"
+  },
+  {
+    "id": "J-11",
+    "title": "多模态数据算法工程师",
+    "officialTitle": "多模态数据算法工程师-【可灵AI】",
+    "officialId": 30054,
+    "type": "社招",
+    "location": "北京、深圳",
+    "updatedAt": "2026-10-12",
+    "verifiedAt": "2026-10-28",
+    "sourceUrl": "https://zhaopin.kuaishou.cn/#/official/social/job-info/30054",
+    "sourceStatus": "官网列表检索可见",
+    "group": "训练数据",
+    "keywords": [
+      "多模态数据",
+      "质量评估"
+    ],
+    "directions": [
+      "数据质量"
+    ],
+    "description": "可灵训练数据方向公开社招岗位。"
+  },
+  {
+    "id": "J-12",
+    "title": "多模态大模型数据策略算法工程师",
+    "officialTitle": "多模态大模型数据策略算法工程师-【可灵AI专项】",
+    "officialId": 31644,
+    "type": "社招",
+    "location": "北京",
+    "updatedAt": "2026-10-12",
+    "verifiedAt": "2026-10-28",
+    "sourceUrl": "https://zhaopin.kuaishou.cn/#/official/social/job-info/31644",
+    "sourceStatus": "官网列表检索可见",
+    "group": "训练数据",
+    "keywords": [
+      "数据策略",
+      "训练数据"
+    ],
+    "directions": [
+      "数据质量"
+    ],
+    "description": "可灵训练数据方向公开社招岗位。"
+  },
+  {
+    "id": "J-13",
+    "title": "多模态大模型数据处理算法工程师",
+    "officialTitle": "多模态大模型数据处理算法工程师 —【可灵团队】",
+    "officialId": 24569,
+    "type": "社招",
+    "location": "北京",
+    "updatedAt": "2026-06-09",
+    "verifiedAt": "2026-10-28",
+    "sourceUrl": "https://zhaopin.kuaishou.cn/#/official/social/job-info/24569",
+    "sourceStatus": "官网列表检索可见",
+    "group": "训练数据",
+    "keywords": [
+      "数据处理",
+      "多模态"
+    ],
+    "directions": [
+      "数据质量"
+    ],
+    "description": "可灵训练数据方向公开社招岗位。"
+  },
+  {
+    "id": "J-14",
+    "title": "大模型数据开发工程师",
+    "officialTitle": "大模型数据开发工程师-【可灵AI专项】",
+    "officialId": 30643,
+    "type": "社招",
+    "location": "北京",
+    "updatedAt": "2026-10-12",
+    "verifiedAt": "2026-10-28",
+    "sourceUrl": "https://zhaopin.kuaishou.cn/#/official/social/job-info/30643",
+    "sourceStatus": "官网列表检索可见",
+    "group": "训练数据",
+    "keywords": [
+      "数据开发",
+      "模型数据"
+    ],
+    "directions": [
+      "数据质量"
+    ],
+    "description": "可灵训练数据方向公开社招岗位。"
+  }
+];
+const sampleJobLinks={'T-001':'J-01','T-002':'J-08','T-003':'J-11','T-004':'J-03','T-005':'J-04','T-006':'J-08','T-007':'J-12','T-008':'J-05'};

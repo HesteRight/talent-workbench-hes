@@ -1,0 +1,15 @@
+const assert=require('node:assert/strict'),W=require('./workflow-core.js'),C=require('./contact-core.js');
+const person={id:'P1',name:'同名'},store={people:[],applications:[],events:[]};
+const first=W.enroll(store,person,'J1',{id:'M1',date:'2026-10-01',source:'论文作者',path:'论文 → P1',verified:true});
+assert(first.added&&first.newPerson);assert.equal(store.people.length,1);
+const repeat=W.enroll(store,person,'J1',{id:'M2',date:'2026-10-02',source:'论文作者',path:'其他论文',verified:true});assert.equal(repeat.added,false);assert.equal(store.applications.length,1);
+const second=W.enroll(store,person,'J2',{id:'M3',date:'2026-10-02',source:'人才关系扩展',path:'共同作者',verified:true});assert(!second.newPerson);assert.equal(store.people.length,1);assert.equal(store.applications.length,2);
+assert.throws(()=>W.enroll(store,{id:'P2'},'J1',{verified:false}));
+const id=first.application.id;W.addEvent(store,id,{kind:'note',date:'2026-10-03',note:'已发送消息',waitReason:'等待候选人回复',nextAt:'2026-10-04'});assert.equal(W.state(store,first.application).stage,0);
+W.addEvent(store,id,{kind:'interview',date:'2026-10-04',note:'仅安排面试'});assert.equal(W.funnel(store,[first.application],'2026-10-10')[1].count,0);
+W.addEvent(store,id,{kind:'stage',stage:1,date:'2026-10-05',note:'确认双向沟通'});assert.equal(W.funnel(store,store.applications,'2026-10-04')[1].count,0);assert.equal(W.funnel(store,store.applications,'2026-10-05')[1].count,1);
+assert.throws(()=>W.addEvent(store,id,{kind:'stage',stage:3,date:'2026-10-06',note:'跳轮'}));assert.throws(()=>W.addEvent(store,id,{kind:'note',date:'2026-02-30',note:'坏日期'}));assert.throws(()=>W.addEvent(store,id,{kind:'note',date:'2026-10-03',note:'倒序'}));
+W.addEvent(store,id,{kind:'closed',date:'2026-10-06',note:'记录原因',reason:'工作地点不匹配'});assert(W.state(store,first.application).closed);assert.equal(W.funnel(store,store.applications,'2026-10-10')[1].count,1);assert(!W.tasks(store,'2026-10-10').some(t=>t.application.id===id));assert.throws(()=>W.addEvent(store,id,{kind:'stage',stage:2,date:'2026-10-07',note:'已结束继续推进'}));
+assert.equal(W.cohort(store,{job:'J2',asOf:'2026-10-01'}).length,0);assert.equal(W.channelRows(store,store.applications,'2026-10-10').reduce((n,c)=>n+c.total,0),2);
+const unknown=C.extract('还没有确认任何信息',[]);assert(Object.values(unknown).every(x=>x==='待确认'));const negative=C.extract('不接受北京。实习3个月，每周3天。下一步：等待答复。',[]);assert.equal(negative['地点接受情况'],'不接受北京');assert.equal(negative['下一步'],'等待答复');assert.equal(C.extract('不接受北京',[],false)['地点接受情况'],'接受北京');
+console.log('PASS: application deduplication, cross-job identity, event-only stages, cutoff, closure, invalid transitions, task removal, negative extraction and unknowns');

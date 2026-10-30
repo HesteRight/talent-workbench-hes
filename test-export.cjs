@@ -1,0 +1,11 @@
+const assert=require('node:assert/strict'),WF=require('./workflow-core.js'),out=require('./export-data.js');
+const a={id:'A',personId:'P',jobId:'J',createdAt:'2026-01-01',owner:'招聘负责人'},s={applications:[a],events:[{applicationId:'A',date:'2026-01-01',order:1,kind:'stage',stage:0},{applicationId:'A',date:'2026-01-02',order:2,kind:'stage',stage:1},{applicationId:'A',date:'2026-01-03',order:3,kind:'interview',round:'技术一面',owner:'招聘负责人',interviewer:'张老师'},{applicationId:'A',date:'2026-01-04',order:4,kind:'feedback',round:'技术一面',note:'基础扎实',interviewer:'张老师'},{applicationId:'A',date:'2026-01-05',order:5,kind:'stage',stage:2},{applicationId:'A',date:'2026-01-06',order:6,kind:'feedback',round:'技术二面',note:'不应提前出现'}]};
+const stages=out.stages(s,[a],'2026-01-05',WF,()=>({name:'候选人',institution:'某研究机构'}),()=>({title:'岗位'}));
+assert.deepEqual(stages.slice(0,4).map(x=>x.rows.length),[0,0,1,0]);
+const row=Object.fromEntries(out.headers.map((h,i)=>[h,stages[2].rows[0][i]]));
+assert.equal(row['毕业院校'],'');assert.equal(row['学历层级'],'');assert.equal(row['公开署名机构'],'某研究机构');assert.equal(row['一面面试官'],'张老师');assert.match(row['一面评价'],/基础扎实/);assert.equal(row['二面评价'],'');assert.notEqual(row['一面面试官'],'招聘负责人');
+assert.equal(row['最新阶段日期'],'2026-01-05');
+const later={...s,events:[...s.events,{applicationId:'A',date:'2026-01-07',order:7,kind:'stage',stage:6}]};
+const salary=out.stages(later,[a],'2026-01-07',WF,()=>({name:'候选人'}),()=>({title:'岗位'}));assert.equal(salary[6].rows.length,1);assert.equal(salary.reduce((n,g)=>n+g.rows.length,0),1);
+later.events.push({applicationId:'A',date:'2026-01-08',order:8,kind:'closed',reason:'候选人主动退出'});const closed=out.stages(later,[a],'2026-01-08',WF,()=>({name:'候选人'}),()=>({title:'岗位'}));assert.equal(closed[9].rows.length,1);assert.equal(closed[6].rows.length,0);
+console.log('PASS: 最新阶段唯一归属、截止日、结束原因与面试字段');
