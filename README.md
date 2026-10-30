@@ -2,7 +2,7 @@
 
 从技术招聘实习场景出发，将论文寻访、人员核验、应聘跟进与招聘分析串成一套可以操作的数据工作流。作者：陈嘉晨。
 
-**[在线体验](https://talent-workbench-chenjc.craftydell20.chatgpt.site/)** · [演示路线](DEMO_GUIDE.md) · [Mapping 说明](MAPPING.md) · [R 分析讲解](analysis/作品讲解.md)
+**[在线体验](https://hesteright.github.io/talent-workbench-hes/)** · [演示路线](DEMO_GUIDE.md) · [Mapping 说明](MAPPING.md) · [R 分析讲解](analysis/作品讲解.md)
 
 ## 业务问题与实现
 
