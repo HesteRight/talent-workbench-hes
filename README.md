@@ -10,12 +10,6 @@
 
 [在线体验人才分析工作台](https://hesteright.github.io/talent-workbench-hes/hr-analytics-workbench/) · [项目说明](hr-analytics-workbench/README.md)
 
-## 系列作品
-
-人才分析工作台基于模拟 HR 数据，展示招聘渠道效能、留存、人效和薪酬分析。可一键载入模拟数据，也可在浏览器内分析符合模板的 CSV。
-
-[在线体验人才分析工作台](https://hesteright.github.io/talent-workbench-hes/hr-analytics-workbench/) · [项目说明](hr-analytics-workbench/README.md)
-
 ## 业务问题与实现
 
 | 业务问题 | 工作台实现 |
