@@ -1,0 +1,830 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>人才分析工作台</title>
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-vW+U2aTJ8Xhr8eV1qwtBwNzcKHRR+WYeG/2sk1WMz9I=' 'self'; style-src 'unsafe-inline'; img-src data:; connect-src 'self'; base-uri 'none'; form-action 'none'">
+<script src="vendor/echarts.min.js"></script>
+<style>
+  :root{
+    --bg:#f5f5f7; --card:#fff; --text:#1d1d1f; --muted:#86868b;
+    --line:#e8e8ed; --accent:#0071e3; --red:#ff3b30; --green:#34c759;
+    --orange:#ff9500; --purple:#bf5af2;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","PingFang SC","Microsoft YaHei",sans-serif;
+    background:var(--bg);color:var(--text);line-height:1.55;padding:0 0 80px;
+    -webkit-font-smoothing:antialiased;
+  }
+  .topbar{
+    position:sticky;top:0;z-index:100;background:rgba(245,245,247,.85);
+    backdrop-filter:saturate(180%) blur(20px);-webkit-backdrop-filter:saturate(180%) blur(20px);
+    border-bottom:1px solid var(--line);
+  }
+  .topbar-inner{max-width:1120px;margin:0 auto;padding:16px 24px;display:flex;align-items:center;gap:14px;}
+  .topbar h1{font-size:18px;font-weight:600;letter-spacing:-.2px;}
+  .topbar .tag{font-size:11px;color:var(--accent);background:#eaf3ff;border-radius:20px;padding:3px 10px;font-weight:500;}
+  .wrap{max-width:1120px;margin:0 auto;padding:28px 24px;}
+  .card{background:var(--card);border-radius:18px;padding:28px;box-shadow:0 4px 20px rgba(0,0,0,.05);margin-bottom:24px;}
+  .card h2{font-size:18px;font-weight:600;margin-bottom:6px;letter-spacing:-.2px;}
+  .card .desc{color:var(--muted);font-size:13px;margin-bottom:20px;}
+  /* 上传区 */
+  .upload-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;}
+  .upload-box{
+    border:2px dashed var(--line);border-radius:16px;padding:24px 16px;text-align:center;
+    cursor:pointer;transition:.2s;background:#fafafa;position:relative;
+  }
+  .upload-box:hover{border-color:var(--accent);background:#f5f9ff;}
+  .upload-box.done{border-style:solid;border-color:var(--green);background:#f0faf3;}
+  .upload-box .ico{font-size:28px;margin-bottom:8px;}
+  .upload-box .fname{font-size:13px;font-weight:500;margin-top:6px;word-break:break-all;}
+  .upload-box .hint{font-size:11px;color:var(--muted);margin-top:4px;}
+  .upload-box input{position:absolute;inset:0;opacity:0;cursor:pointer;}
+  /* 模块选择 */
+  .module-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;}
+  .module{
+    border:1px solid var(--line);border-radius:14px;padding:14px 16px;cursor:pointer;
+    transition:.15s;display:flex;align-items:flex-start;gap:10px;user-select:none;background:#fff;
+  }
+  .module:hover{border-color:var(--accent);}
+  .module.on{border-color:var(--accent);background:#f0f6ff;}
+  .module .ck{
+    flex:0 0 18px;height:18px;border-radius:5px;border:1.5px solid #c7c7cc;margin-top:1px;
+    display:flex;align-items:center;justify-content:center;font-size:12px;color:#fff;transition:.15s;
+  }
+  .module.on .ck{background:var(--accent);border-color:var(--accent);}
+  .module .mt{font-size:13.5px;font-weight:500;}
+  .module .md{font-size:11.5px;color:var(--muted);margin-top:2px;}
+  .module .src{font-size:10px;color:var(--muted);margin-top:4px;opacity:.8;}
+  .toolbar{display:flex;gap:12px;align-items:center;margin-top:22px;flex-wrap:wrap;}
+  .btn{
+    border:none;border-radius:980px;padding:11px 24px;font-size:14px;font-weight:500;cursor:pointer;
+    transition:.15s;font-family:inherit;
+  }
+  .btn.primary{background:var(--accent);color:#fff;}
+  .btn.primary:hover{background:#0077ed;}
+  .btn.primary:disabled{background:#c7c7cc;cursor:not-allowed;}
+  .btn.ghost{background:#f2f2f7;color:var(--text);}
+  .btn.ghost:hover{background:#e8e8ed;}
+  .msg{font-size:13px;color:var(--muted);}
+  .msg.err{color:var(--red);}
+  .msg.ok{color:var(--green);}
+  /* 看板 */
+  #board .card h2{display:flex;align-items:baseline;gap:10px;}
+  #board .no{font-size:12px;color:var(--muted);font-weight:400;}
+  .chart{width:100%;height:340px;}
+  .conclusion{margin-top:20px;background:#f5f5f7;border-radius:14px;padding:20px;}
+  .conclusion h3{font-size:15px;font-weight:600;margin-bottom:12px;}
+  .metric-row{display:flex;flex-wrap:wrap;gap:14px;margin-bottom:16px;}
+  .metric{flex:1 1 160px;background:#fff;border-radius:14px;padding:15px 18px;box-shadow:0 1px 4px rgba(0,0,0,.04);}
+  .metric .label{font-size:12px;color:var(--muted);}
+  .metric .value{font-size:24px;font-weight:600;margin-top:3px;letter-spacing:-.5px;}
+  .metric .value.red{color:var(--red);} .metric .value.green{color:var(--green);}
+  .metric .value.orange{color:var(--orange);}
+  .alert-item{display:flex;gap:10px;align-items:flex-start;font-size:13.5px;color:#3a3a3c;margin-bottom:9px;line-height:1.6;}
+  .alert-item .dot{flex:0 0 6px;height:6px;width:6px;border-radius:50%;background:var(--accent);margin-top:8px;}
+  .banner{border-radius:16px;padding:20px 22px;margin-bottom:14px;background:#f5f5f7;}
+  .banner.green{background:#f0faf3;} .banner.red{background:#fdf0ef;} .banner.blue{background:#f0f6ff;}
+  .banner .bt{font-size:15px;font-weight:600;margin-bottom:8px;}
+  .banner .bb{font-size:13.5px;color:#3a3a3c;line-height:1.7;}
+  .banner .bb b{font-weight:600;color:var(--text);}
+  table{width:100%;border-collapse:collapse;font-size:13px;margin-top:12px;}
+  th,td{padding:9px 12px;text-align:left;border-bottom:1px solid var(--line);}
+  th{color:var(--muted);font-weight:500;font-size:12px;}
+  td{color:#3a3a3c;}
+  .empty{color:var(--muted);text-align:center;padding:60px 0;font-size:14px;}
+  @media(max-width:760px){
+    .upload-grid,.module-grid{grid-template-columns:1fr;}
+  }
+</style>
+</head>
+<body>
+  <div class="topbar">
+    <div class="topbar-inner">
+      <h1>人才分析工作台</h1>
+      <span class="tag">演示环境 · 上传即分析 · 可选模块</span>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <!-- 上传 -->
+    <div class="card">
+      <h2>第一步 · 选择数据</h2>
+      <p class="desc">腾讯青科 HR 数据分析实训作品 · 陈嘉晨。示例使用模拟数据。漏斗前序阶段与首月留存为估算，司龄分布只展示花名册快照。看板中的阈值和建议用于演示。</p>
+      <div class="toolbar">
+        <button class="btn primary" id="btnDemo">体验模拟数据</button>
+        <a href="../">返回人才线索工作台</a>
+      </div>
+      <p class="desc">上传三份 CSV，系统会在浏览器本地解析（数据不出本机）。支持 utf-8 / utf-8-sig / gbk 编码。</p>
+      <div class="upload-grid">
+        <div class="upload-box" id="box1">
+          <div class="ico">👥</div>
+          <div class="mt">员工花名册.csv</div>
+          <div class="hint" id="hint1">employee_id · department · job_level · tenure · age · salary · performance</div>
+          <div class="fname" id="fname1"></div>
+          <input type="file" accept=".csv" id="file1">
+        </div>
+        <div class="upload-box" id="box2">
+          <div class="ico">🔄</div>
+          <div class="mt">人才流动数据.csv</div>
+          <div class="hint" id="hint2">quarter · department · channel · hires · departures · retention</div>
+          <div class="fname" id="fname2"></div>
+          <input type="file" accept=".csv" id="file2">
+        </div>
+        <div class="upload-box" id="box3">
+          <div class="ico">📈</div>
+          <div class="mt">部门人效数据.csv</div>
+          <div class="hint" id="hint3">quarter · department · headcount · revenue · profit · labor_cost</div>
+          <div class="fname" id="fname3"></div>
+          <input type="file" accept=".csv" id="file3">
+        </div>
+      </div>
+    </div>
+
+    <!-- 模块 -->
+    <div class="card">
+      <h2>第二步 · 选择分析模块</h2>
+      <p class="desc">勾选想看的维度，按需生成对应板块。模块名后的标注是所需的数据源。</p>
+      <div class="module-grid" id="moduleGrid"></div>
+      <div class="toolbar">
+        <button class="btn primary" id="btnRun" disabled>生成分析看板</button>
+        <button class="btn ghost" id="btnClear">清空重来</button>
+        <span class="msg" id="msg"></span>
+      </div>
+    </div>
+
+    <!-- 看板 -->
+    <div id="board"></div>
+  </div>
+
+<script>
+/* ==================== 数据状态 ==================== */
+const FILES = {
+  roster:{key:'roster', name:'员工花名册', rows:null, cols:null, file:null},
+  flow:{key:'flow', name:'人才流动数据', rows:null, cols:null, file:null},
+  eff:{key:'eff', name:'部门人效数据', rows:null, cols:null, file:null}
+};
+
+/* ==================== CSV 解析 ==================== */
+function parseCSV(text){
+  // 去掉 BOM
+  if(text.charCodeAt(0)===0xFEFF) text=text.slice(1);
+  const lines=text.split(/\r?\n/).filter(l=>l.trim()!=='');
+  if(lines.length<2) return {cols:[],rows:[]};
+  const cols=lines[0].split(',').map(s=>s.trim().replace(/^"|"$/g,''));
+  const rows=[];
+  for(let i=1;i<lines.length;i++){
+    const cells=lines[i].split(',').map(s=>s.trim().replace(/^"|"$/g,''));
+    if(cells.length<cols.length) continue;
+    const obj={};
+    cols.forEach((c,j)=>obj[c]=cells[j]);
+    rows.push(obj);
+  }
+  return {cols,rows};
+}
+
+function decodeBuffer(buf){
+  // 尝试 utf-8，失败则 gbk
+  try{
+    const text=new TextDecoder('utf-8',{fatal:false}).decode(buf);
+    return text;
+  }catch(e){ return ''; }
+}
+
+/* ==================== 文件绑定 ==================== */
+function bindFile(slot, inputId, boxId, fnameId, hintId){
+  const input=document.getElementById(inputId);
+  input.addEventListener('change',async ()=>{
+    const f=input.files[0];
+    if(!f) return;
+    const buf=await f.arrayBuffer();
+    let text=new TextDecoder('utf-8').decode(buf);
+    // 检测 gbk（含乱码则尝试 gbk）
+    if(text.includes('\uFFFD')){
+      try{ text=new TextDecoder('gbk').decode(buf); }catch(e){}
+    }
+    const {cols,rows}=parseCSV(text);
+    if(rows.length===0){
+      document.getElementById(hintId).textContent='解析失败，请检查文件格式';
+      document.getElementById(hintId).style.color='var(--red)';
+      return;
+    }
+    slot.rows=rows; slot.cols=cols; slot.file=f;
+    document.getElementById(boxId).classList.add('done');
+    document.getElementById(fnameId).textContent='✓ '+f.name+'（'+rows.length+' 行）';
+    document.getElementById(hintId).textContent='字段：'+cols.join(' · ');
+    updateRunState();
+  });
+}
+bindFile(FILES.roster,'file1','box1','fname1','hint1');
+bindFile(FILES.flow,'file2','box2','fname2','hint2');
+bindFile(FILES.eff,'file3','box3','fname3','hint3');
+
+/* ==================== 模块定义 ==================== */
+const MODULES=[
+  {id:'turnover', title:'离职趋势', desc:'季度离职人数与离职／招聘比', src:'人才流动数据', need:['flow']},
+  {id:'dept_turnover', title:'部门离职分析', desc:'离职人数与花名册人数之比', src:'人才流动数据 + 花名册', need:['flow','roster']},
+  {id:'tenure', title:'司龄断档', desc:'在册员工司龄分段', src:'花名册 + 人才流动数据', need:['roster','flow']},
+  {id:'cohort', title:'同期群留存', desc:'入职季度×留存月数热力图', src:'人才流动数据', need:['flow']},
+  {id:'funnel', title:'招聘漏斗', desc:'四渠道转化漏斗', src:'人才流动数据', need:['flow']},
+  {id:'cost', title:'招聘成本', desc:'各渠道总成本与人均成本', src:'人才流动数据', need:['flow']},
+  {id:'retention', title:'渠道留存', desc:'3/6月留存与衰减', src:'人才流动数据', need:['flow']},
+  {id:'quadrant', title:'渠道性价比四象限', desc:'人均成本×留存', src:'人才流动数据', need:['flow']},
+  {id:'eff', title:'部门人效', desc:'人均营收/利润', src:'部门人效数据', need:['eff']},
+  {id:'eff_trend', title:'人效趋势', desc:'人均利润季度走势', src:'部门人效数据', need:['eff']},
+  {id:'cost_ratio', title:'成本结构', desc:'人力成本占比与瘦身', src:'部门人效数据', need:['eff']},
+  {id:'scale', title:'规模经济性', desc:'人数×人均利润', src:'部门人效数据', need:['eff']},
+  {id:'level', title:'职级梯队', desc:'金字塔形态与断层', src:'花名册', need:['roster']},
+  {id:'key_pos', title:'关键岗位备份', desc:'覆盖率与零备份清单', src:'花名册', need:['roster']},
+  {id:'age', title:'年龄司龄断层', desc:'各职级年龄/司龄', src:'花名册', need:['roster']},
+  {id:'nine_grid', title:'人才九宫格', desc:'绩效×潜力高潜识别', src:'花名册', need:['roster']},
+  {id:'salary_perf', title:'薪酬绩效关联', desc:'高薪低绩效/低薪高绩效', src:'花名册', need:['roster']},
+  {id:'roi', title:'激励ROI', desc:'人均利润/人均成本', src:'部门人效数据', need:['eff']},
+  {id:'salary_pct', title:'薪资分位', desc:'关键岗被挖角风险', src:'花名册', need:['roster']},
+  {id:'summary', title:'一页纸方案', desc:'面向HRD的加/砍建议', src:'全部三份', need:['flow','roster','eff']}
+];
+
+/* 渲染模块列表 */
+const moduleGrid=document.getElementById('moduleGrid');
+const moduleState={};
+MODULES.forEach(m=>{
+  moduleState[m.id]=false;
+  const div=document.createElement('div');
+  div.className='module';
+  div.dataset.id=m.id;
+  div.innerHTML='<div class="ck">✓</div><div><div class="mt">'+m.title+'</div><div class="md">'+m.desc+'</div><div class="src">数据源：'+m.src+'</div></div>';
+  div.addEventListener('click',()=>{
+    moduleState[m.id]=!moduleState[m.id];
+    div.classList.toggle('on',moduleState[m.id]);
+    updateRunState();
+  });
+  moduleGrid.appendChild(div);
+});
+
+/* ==================== 状态判断 ==================== */
+function loadedCount(){
+  return ['roster','flow','eff'].filter(k=>FILES[k].rows).length;
+}
+function updateRunState(){
+  const btn=document.getElementById('btnRun');
+  const anyModule=Object.values(moduleState).some(v=>v);
+  const anyFile=loadedCount()>0;
+  btn.disabled=!(anyModule&&anyFile);
+  const msg=document.getElementById('msg');
+  msg.textContent='';
+  msg.className='msg';
+}
+
+/* ==================== 分析引擎 ==================== */
+function num(v){ const n=parseFloat(v); return isNaN(n)?0:n; }
+function sum(arr){ return arr.reduce((a,b)=>a+b,0); }
+function avg(arr){ return arr.length?sum(arr)/arr.length:0; }
+function groupBy(rows,key){ const m={}; rows.forEach(r=>{ const k=r[key]; (m[k]=m[k]||[]).push(r); }); return m; }
+function pct(v,n){ return n?+(v/n*100).toFixed(1):0; }
+
+/* 各模块分析，返回 {html} 片段 */
+const ANALYSERS={
+  /* 1 离职趋势 */
+  turnover(){
+    const d={}; FILES.flow.rows.forEach(r=>{ const q=r.quarter; d[q]=d[q]||{h:0,d:0}; d[q].h+=num(r.hires); d[q].d+=num(r.departures); });
+    const qs=['Q1','Q2','Q3'].filter(q=>d[q]);
+    const hires=qs.map(q=>d[q].h), deps=qs.map(q=>d[q].d), rates=qs.map(q=>pct(d[q].d,d[q].h));
+    const maxIdx=deps.indexOf(Math.max(...deps));
+    const prev=deps[maxIdx-1], cur=deps[maxIdx];
+    const huanbi=prev?((cur-prev)/prev*100).toFixed(1):'—';
+    return {html:`
+      <div class="card"><h2>离职趋势 <span class="no">按季度</span></h2>
+        <div class="chart" id="c_turnover"></div>
+        <div class="conclusion"><h3>结论</h3>
+          <div class="metric-row">
+            <div class="metric"><div class="label">离职最高季度</div><div class="value red">${qs[maxIdx]}（${cur}人）</div></div>
+            <div class="metric"><div class="label">环比变化</div><div class="value orange">${huanbi==='—'?'—':(huanbi>=0?'+':'')+huanbi+'%'}</div></div>
+            <div class="metric"><div class="label">最新季度离职／招聘比</div><div class="value">${rates[rates.length-1]}%</div></div>
+          </div>
+          <div class="alert-item"><span class="dot"></span>离职人数逐季 ${deps.join(' → ')}，离职／招聘比 ${rates.join('% → ')}%，招聘 ${hires.join(' → ')}，需警惕净流出与招不动并存。</div>
+        </div>
+      </div>`,
+      charts:[{id:'c_turnover',opt:dualAxis(qs,'离职人数','离职／招聘比',deps,rates,'bar','line')}]
+    };
+  },
+
+  /* 2 部门离职 */
+  dept_turnover(){
+    const dc={}, depts=new Set();
+    FILES.roster.rows.forEach(r=>{ dc[r.department]=(dc[r.department]||0)+1; depts.add(r.department); });
+    const dl={};
+    FILES.flow.rows.forEach(r=>{ dl[r.department]=(dl[r.department]||{}); dl[r.department][r.quarter]=(dl[r.department][r.quarter]||0)+num(r.departures); });
+    const order=[...depts];
+    const qs=['Q1','Q2','Q3'];
+    const series=qs.map(q=>({name:q,data:order.map(d=>pct(dl[d]?.[q]||0, dc[d]||1))}));
+    return {html:`
+      <div class="card"><h2>部门离职分析 <span class="no">季度离职人数／花名册人数</span></h2>
+        <div class="chart" id="c_dept_turnover"></div>
+        <div class="conclusion"><h3>重灾区结论</h3>
+          <div class="alert-item"><span class="dot"></span>${order.map(d=>`${d}（${dc[d]}人）`).join('、')}。离职人数与花名册人数之比最高的部门是 ${maxDept(order,qs,dl,dc)}，需要结合绝对人数判断是「绝对流失大户」还是「比例高危」。</div>
+        </div>
+      </div>`,
+      charts:[{id:'c_dept_turnover',opt:groupedBar(order,series)}]
+    };
+  },
+
+  /* 3 司龄断档 */
+  tenure(){
+    const buckets={'0-3月':0,'3-6月':0,'6-12月':0,'12-24月':0,'24+月':0};
+    const monthly={};
+    FILES.roster.rows.forEach(r=>{ const t=num(r.tenure_months); monthly[t]=(monthly[t]||0)+1;
+      if(t<3)buckets['0-3月']++; else if(t<6)buckets['3-6月']++; else if(t<12)buckets['6-12月']++; else if(t<24)buckets['12-24月']++; else buckets['24+月']++;
+    });
+    const bk=Object.keys(buckets), bv=bk.map(b=>buckets[b]);
+    const minB=bk[bv.indexOf(Math.min(...bv))];
+    return {html:`
+      <div class="card"><h2>在册员工司龄分布</h2>
+        <div class="chart" id="c_tenure"></div>
+        <div class="conclusion"><h3>结论</h3>
+          <div class="metric-row">
+            <div class="metric"><div class="label">断档段</div><div class="value red">${minB}</div></div>
+            <div class="metric"><div class="label">该段人数</div><div class="value">${Math.min(...bv)}</div></div>
+          </div>
+          <div class="alert-item"><span class="dot"></span>司龄分布 ${bk.map((b,i)=>b+' '+bv[i]).join(' / ')}。人数最少的分段为 ${minB}。判断离职高危期需要离职员工的司龄记录。</div>
+        </div>
+      </div>`,
+      charts:[{id:'c_tenure',opt:singleBar(bk,bv,minB)}]
+    };
+  },
+
+  /* 4 同期群留存 */
+  cohort(){
+    const d={};
+    FILES.flow.rows.forEach(r=>{ const q=r.quarter; d[q]=d[q]||{h:0,w3:0,w6:0}; d[q].h+=num(r.hires); d[q].w3+=num(r.hires)*num(r.retention_3m); d[q].w6+=num(r.hires)*num(r.retention_6m); });
+    const qs=['Q1','Q2','Q3'].filter(q=>d[q]);
+    const matrix=qs.map(q=>{ const r3=pct(d[q].w3,d[q].h), r6=pct(d[q].w6,d[q].h); const r1=+(r3+(100-r3)*0.55).toFixed(1); return {q,r1,r3,r6}; });
+    const worst=matrix.reduce((a,b)=>b.r6<a.r6?b:a);
+    return {html:`
+      <div class="card"><h2>同期群留存 <span class="no">入职后1/3/6个月留存率%</span></h2>
+        <div class="chart" id="c_cohort"></div>
+        <div class="conclusion"><h3>结论</h3>
+          <div class="metric-row">
+            <div class="metric"><div class="label">最危险批次</div><div class="value red">${worst.q}（6月留存 ${worst.r6}%）</div></div>
+          </div>
+          <div class="alert-item"><span class="dot"></span>${matrix.map(m=>`${m.q}：1月${m.r1}% → 3月${m.r3}% → 6月${m.r6}%`).join('；')}。1个月为估算值，实际以 3/6 月为准；所有批次主要流失在 3→6 个月（转正窗口）。</div>
+        </div>
+      </div>`,
+      charts:[{id:'c_cohort',opt:heatmap(['1个月','3个月','6个月'],qs,matrix,58,88)}]
+    };
+  },
+
+  /* 5 招聘漏斗 */
+  funnel(){
+    const conv={'猎头':{ri:.55,io:.55,oh:.80},'内推':{ri:.60,io:.50,oh:.90},'招聘网站':{ri:.25,io:.45,oh:.65},'校招':{ri:.20,io:.50,oh:.75}};
+    const h={}; FILES.flow.rows.forEach(r=>{ h[r.channel]=(h[r.channel]||0)+num(r.hires); });
+    const chs=Object.keys(h).filter(c=>conv[c]);
+    const data=chs.map(c=>{ const hh=h[c], offer=Math.round(hh/conv[c].oh), iv=Math.round(offer/conv[c].io), resume=Math.round(iv/conv[c].ri);
+      const loss=Math.max((1-conv[c].ri),(1-conv[c].io),(1-conv[c].oh));
+      return {c,resume,iv,offer,hired:hh,lossStage:loss===(1-conv[c].ri)?'简历→面试':(loss===(1-conv[c].io)?'面试→Offer':'Offer→到岗')};
+    });
+    if (!data.length) return {html:'<div class="card"><h2>招聘渠道漏斗</h2><p>当前渠道缺少演示转化率假设。</p></div>'};
+    return {html:`
+      <div class="card"><h2>招聘渠道漏斗 <span class="no">前序阶段为模拟估算</span></h2>
+        <div class="chart" id="c_funnel"></div>
+        <div class="conclusion"><h3>结论</h3>
+          <div class="alert-item"><span class="dot"></span>${data.map(d=>`${d.c}：${d.resume}→${d.iv}→${d.offer}→${d.hired}（最大流失在「${d.lossStage}」）`).join('；')}。简历、面试和 Offer 人数按预设转化率从到岗数倒推，仅用于展示漏斗方法。</div>
+        </div>
+      </div>`,
+      charts:[{id:'c_funnel',opt:multiFunnel(data)}]
+    };
+  },
+
+  /* 6 招聘成本 */
+  cost(){
+    const d={}; FILES.flow.rows.forEach(r=>{ d[r.channel]=d[r.channel]||{h:0,c:0}; d[r.channel].h+=num(r.hires); d[r.channel].c+=num(r.hires)*num(r.cost_per_hire); });
+    const chs=Object.keys(d);
+    const total=chs.map(c=>d[c].c), avgc=chs.map(c=>Math.round(d[c].c/d[c].h));
+    return {html:`
+      <div class="card"><h2>招聘成本 <span class="no">总成本×人均成本</span></h2>
+        <div class="chart" id="c_cost"></div>
+        <div class="conclusion"><h3>钱都花哪了</h3>
+          <div class="alert-item"><span class="dot"></span>${chs.map(c=>`${c}：总成本 ${(d[c].c/10000).toFixed(1)}万、人均 ${avgc[chs.indexOf(c)]}元`).join('；')}。总成本与人均成本最高的渠道需重点审视 ROI。</div>
+        </div>
+      </div>`,
+      charts:[{id:'c_cost',opt:dualAxis(chs,'总成本(万)','人均成本(元)',chs.map(c=>+(d[c].c/10000).toFixed(1)),avgc,'bar','line')}]
+    };
+  },
+
+  /* 7 渠道留存 */
+  retention(){
+    const d={}; FILES.flow.rows.forEach(r=>{ d[r.channel]=d[r.channel]||{h:0,w3:0,w6:0}; d[r.channel].h+=num(r.hires); d[r.channel].w3+=num(r.hires)*num(r.retention_3m); d[r.channel].w6+=num(r.hires)*num(r.retention_6m); });
+    const chs=Object.keys(d);
+    const r3=chs.map(c=>pct(d[c].w3,d[c].h)), r6=chs.map(c=>pct(d[c].w6,d[c].h));
+    const drop=chs.map((c,i)=>+(r3[i]-r6[i]).toFixed(1));
+    return {html:`
+      <div class="card"><h2>渠道留存 <span class="no">3个月 vs 6个月</span></h2>
+        <div class="chart" id="c_retention"></div>
+        <div class="conclusion"><h3>谁能留得住人</h3>
+          <div class="alert-item"><span class="dot"></span>${chs.map((c,i)=>`${c}：3月${r3[i]}% → 6月${r6[i]}%（衰减 ${drop[i]}pct）`).join('；')}。留存最高与衰减最快的渠道一目了然。</div>
+        </div>
+      </div>`,
+      charts:[{id:'c_retention',opt:groupedBar(chs,[{name:'3个月留存',data:r3},{name:'6个月留存',data:r6}])}]
+    };
+  },
+
+  /* 8 四象限 */
+  quadrant(){
+    const d={}; FILES.flow.rows.forEach(r=>{ d[r.channel]=d[r.channel]||{h:0,c:0,w6:0}; d[r.channel].h+=num(r.hires); d[r.channel].c+=num(r.hires)*num(r.cost_per_hire); d[r.channel].w6+=num(r.hires)*num(r.retention_6m); });
+    const chs=Object.keys(d);
+    const pts=chs.map(c=>({name:c,value:[Math.round(d[c].c/d[c].h),+pct(d[c].w6,d[c].h),d[c].h]}));
+    const xmid=avg(pts.map(p=>p.value[0])), ymid=60;
+    return {html:`
+      <div class="card"><h2>渠道性价比四象限 <span class="no">人均成本×6月留存</span></h2>
+        <div class="chart" id="c_quadrant"></div>
+        <div class="conclusion"><h3>该加哪、该砍哪</h3>
+          <div class="alert-item"><span class="dot"></span>低成本高留存 = 性价比之王（该加预算）；低成本低留存 = 该砍/改造；高成本高留存 = 留给关键岗；高成本低留存 = 最该收缩。</div>
+        </div>
+      </div>`,
+      charts:[{id:'c_quadrant',opt:quadrantScatter(pts,xmid,ymid)}]
+    };
+  },
+
+  /* 9 部门人效 */
+  eff(){
+    const d={}; FILES.eff.rows.forEach(r=>{ if(r.quarter==='Q3'||!d[r.department]){ d[r.department]={rev:num(r.revenue_per_capita),profit:num(r.profit_per_capita)}; } });
+    const depts=Object.keys(d);
+    const rev=depts.map(x=>d[x].rev), profit=depts.map(x=>d[x].profit);
+    return {html:`
+      <div class="card"><h2>部门人效 <span class="no">人均营收/利润（元）</span></h2>
+        <div class="chart" id="c_eff"></div>
+        <div class="conclusion"><h3>谁是价值创造者</h3>
+          <div class="alert-item"><span class="dot"></span>人均利润排序：${depts.slice().sort((a,b)=>d[b].profit-d[a].profit).map(x=>`${x}（${(d[x].profit/10000).toFixed(1)}万）`).join(' > ')}。人均利润为负的部门是成本中心，需控规模。</div>
+        </div>
+      </div>`,
+      charts:[{id:'c_eff',opt:groupedBar(depts,[{name:'人均营收',data:rev},{name:'人均利润',data:profit}])}]
+    };
+  },
+
+  /* 10 人效趋势 */
+  eff_trend(){
+    const d={}; FILES.eff.rows.forEach(r=>{ d[r.department]=d[r.department]||{}; d[r.department][r.quarter]=num(r.profit_per_capita); });
+    const depts=Object.keys(d), qs=['Q1','Q2','Q3'];
+    const series=depts.map(dept=>({name:dept,type:'line',smooth:true,data:qs.map(q=>d[dept][q]??null)}));
+    return {html:`
+      <div class="card"><h2>部门人效趋势 <span class="no">人均利润季度走势</span></h2>
+        <div class="chart" id="c_eff_trend"></div>
+        <div class="conclusion"><h3>谁在变强、谁在变弱</h3>
+          <div class="alert-item"><span class="dot"></span>${depts.map(x=>`${x}：${qs.map(q=>d[x][q]??'-').join(' → ')}`).join('；')}。持续上升的部门在变强，连续下滑的部门需诊断。</div>
+        </div>
+      </div>`,
+      charts:[{id:'c_eff_trend',opt:{tooltip:{trigger:'axis'},legend:{top:0},grid:{left:50,right:30,top:40,bottom:30},xAxis:{type:'category',data:qs},yAxis:{type:'value'},series}}]
+    };
+  },
+
+  /* 11 成本结构 */
+  cost_ratio(){
+    const d={}; FILES.eff.rows.forEach(r=>{ d[r.department]=d[r.department]||{lab:0,rev:0}; d[r.department].lab+=num(r.labor_cost); d[r.department].rev+=num(r.revenue_per_capita)*num(r.headcount); });
+    const depts=Object.keys(d);
+    const ratios=depts.map(x=>d[x].rev?pct(d[x].lab,d[x].rev):null);
+    const labs=depts.map(x=>+(d[x].lab/10000).toFixed(1));
+    const maxIdx=ratios.reduce((a,b,i)=>((b??-1)>(ratios[a]??-1)?i:a),0);
+    return {html:`
+      <div class="card"><h2>成本结构 <span class="no">人力成本占营收比%</span></h2>
+        <div class="chart" id="c_cost_ratio"></div>
+        <div class="conclusion"><h3>红线判断</h3>
+          <div class="metric-row">
+            <div class="metric"><div class="label">占比最高</div><div class="value red">${depts[maxIdx]} ${ratios[maxIdx]}%</div></div>
+          </div>
+          <div class="alert-item"><span class="dot"></span>红线参考：30%~40% 健康、40%~50% 警戒、>50% 超标。${depts.map((x,i)=>`${x} ${ratios[i]===null?'（纯成本）':ratios[i]+'%'}`).join('、')}。</div>
+        </div>
+      </div>`,
+      charts:[{id:'c_cost_ratio',opt:dualAxis(depts,'labor_cost(万)','占比%',labs,ratios,'bar','line')}]
+    };
+  },
+
+  /* 12 规模经济 */
+  scale(){
+    const d={}; FILES.eff.rows.forEach(r=>{ if(r.quarter==='Q3'||!d[r.department]){ d[r.department]={hc:num(r.headcount),profit:num(r.profit_per_capita)}; } });
+    const depts=Object.keys(d);
+    const pts=depts.map(x=>({name:x,value:[d[x].hc,d[x].profit]}));
+    return {html:`
+      <div class="card"><h2>规模经济性 <span class="no">人数×人均利润</span></h2>
+        <div class="chart" id="c_scale"></div>
+        <div class="conclusion"><h3>人力该往哪倾斜</h3>
+          <div class="alert-item"><span class="dot"></span>人数多、人均利润也高的部门 = 规模经济（该加投）；人数多、人均利润低的 = 规模不经济（该收缩）。</div>
+        </div>
+      </div>`,
+      charts:[{id:'c_scale',opt:{tooltip:{formatter:p=>p.data.name+'：'+p.data.value[0]+'人，人均利润 '+p.data.value[1]+' 元'},grid:{left:50,right:30,top:30,bottom:40},xAxis:{type:'value',name:'人数'},yAxis:{type:'value',name:'人均利润'},series:[{type:'scatter',symbolSize:24,data:pts,label:{show:true,position:'top',fontSize:11,formatter:p=>p.data.name},itemStyle:{color:'#0071e3'}}]}}]
+    };
+  },
+
+  /* 13 职级梯队 */
+  level(){
+    const lv={}; FILES.roster.rows.forEach(r=>{ lv[r.job_level]=(lv[r.job_level]||0)+1; });
+    const order=Object.keys(lv).sort();
+    const vals=order.map(l=>lv[l]);
+    const maxL=order[vals.indexOf(Math.max(...vals))];
+    return {html:`
+      <div class="card"><h2>职级梯队 <span class="no">横向金字塔</span></h2>
+        <div class="chart" id="c_level"></div>
+        <div class="conclusion"><h3>梯队结构是否健康</h3>
+          <div class="metric-row">
+            <div class="metric"><div class="label">人数最多层级</div><div class="value orange">${maxL}（${Math.max(...vals)}人）</div></div>
+          </div>
+          <div class="alert-item"><span class="dot"></span>${order.map((l,i)=>`${l} ${vals[i]}`).join(' / ')}。若中间层级远多于上下、或高层人数异常反弹，说明存在「中部臃肿 / 上部分层异常」。</div>
+        </div>
+      </div>`,
+      charts:[{id:'c_level',opt:{tooltip:{},grid:{left:50,right:30,top:20,bottom:30},xAxis:{type:'value'},yAxis:{type:'category',data:order.reverse()},series:[{type:'bar',data:vals.reverse(),barWidth:16,itemStyle:{color:'#0071e3'},label:{show:true,position:'right'}}]}}]
+    };
+  },
+
+  /* 14 关键岗位备份 */
+  key_pos(){
+    const key=[]; FILES.roster.rows.forEach(r=>{ if(r.is_key_position==='是') key.push(r); });
+    const combo={}; key.forEach(r=>{ const k=r.department+'|'+r.job_level; combo[k]=(combo[k]||0)+1; });
+    const backed=key.filter(r=>combo[r.department+'|'+r.job_level]>=2).length;
+    const total=key.length;
+    const rate=total?pct(backed,total):0;
+    const zeroDept={}; key.forEach(r=>{ if(combo[r.department+'|'+r.job_level]<2){ zeroDept[r.department]=zeroDept[r.department]||new Set(); zeroDept[r.department].add(r.job_level); } });
+    return {html:`
+      <div class="card"><h2>关键岗位备份 <span class="no">覆盖率</span></h2>
+        <div class="chart" id="c_key_pos"></div>
+        <div class="conclusion"><h3>哪些关键岗最危险</h3>
+          <div class="metric-row">
+            <div class="metric"><div class="label">关键岗位总数</div><div class="value">${total}</div></div>
+            <div class="metric"><div class="label">有备份</div><div class="value green">${backed}</div></div>
+            <div class="metric"><div class="label">覆盖率</div><div class="value ${rate<60?'red':'green'}">${rate}%</div></div>
+          </div>
+          <div class="alert-item"><span class="dot"></span>零备份集中在：${Object.keys(zeroDept).map(d=>`${d}（${[...zeroDept[d]].sort().join('、')}）`).join('；')||'无'}。覆盖率建议提升到 80% 以上。</div>
+        </div>
+      </div>`,
+      charts:[{id:'c_key_pos',opt:{tooltip:{trigger:'item'},series:[{type:'pie',radius:['55%','75%'],data:[{name:'有备份',value:backed,itemStyle:{color:'#34c759'}},{name:'零备份',value:total-backed,itemStyle:{color:'#ff3b30'}}],label:{formatter:'{b}: {c} ({d}%)'}}]}}]
+    };
+  },
+
+  /* 15 年龄司龄断层 */
+  age(){
+    const d={}; FILES.roster.rows.forEach(r=>{ d[r.job_level]=d[r.job_level]||{ages:[],ten:[]}; d[r.job_level].ages.push(num(r.age)); d[r.job_level].ten.push(num(r.tenure_months)); });
+    const order=Object.keys(d).sort();
+    const ages=order.map(l=>+avg(d[l].ages).toFixed(1));
+    const ten=order.map(l=>+(avg(d[l].ten)/12).toFixed(1));
+    return {html:`
+      <div class="card"><h2>年龄/司龄断层 <span class="no">各职级均值</span></h2>
+        <div class="chart" id="c_age"></div>
+        <div class="conclusion"><h3>断层在哪一段</h3>
+          <div class="alert-item"><span class="dot"></span>${order.map((l,i)=>`${l}：年龄${ages[i]}岁/司龄${ten[i]}年`).join('；')}。相邻职级年龄跳变最大的位置即为断层，往往对应某一层级的高流失。</div>
+        </div>
+      </div>`,
+      charts:[{id:'c_age',opt:dualAxis(order,'平均年龄(岁)','平均司龄(年)',ages,ten,'bar','line')}]
+    };
+  },
+
+  /* 16 九宫格 */
+  nine_grid(){
+    const d={}; FILES.roster.rows.forEach(r=>{ const lv=parseInt((r.job_level||'P1').slice(1))||1; const perf=r.performance; const k=lv+'|'+perf; d[k]=(d[k]||0)+1; });
+    const data=Object.keys(d).map(k=>{ const [lv,pf]=k.split('|'); const pv={A:1,B:2,C:3,D:4}[pf]; return {name:'P'+lv+'·'+pf,value:[+lv,pv,d[k]]}; });
+    const highPot=data.filter(x=>x.value[1]===1&&x.value[0]<=3).reduce((a,b)=>a+b.value[2],0);
+    const mismatch=data.filter(x=>(x.value[1]>=3)&&x.value[0]>=6).reduce((a,b)=>a+b.value[2],0);
+    return {html:`
+      <div class="card"><h2>人才九宫格 <span class="no">绩效×潜力</span></h2>
+        <div class="chart" id="c_nine_grid"></div>
+        <div class="conclusion"><h3>接班人 / 汰换</h3>
+          <div class="metric-row">
+            <div class="metric"><div class="label">被低估(高潜)</div><div class="value green">${highPot}人</div></div>
+            <div class="metric"><div class="label">德不配位</div><div class="value red">${mismatch}人</div></div>
+          </div>
+          <div class="alert-item"><span class="dot"></span>绩效A且职级≤P3 = 被低估的高潜（该培养）；职级≥P6且绩效C/D = 德不配位（该汰换）。</div>
+        </div>
+      </div>`,
+      charts:[{id:'c_nine_grid',opt:{tooltip:{formatter:p=>p.data.name+'：'+p.data.value[2]+'人'},grid:{left:50,right:30,top:30,bottom:40},xAxis:{type:'value',name:'绩效',min:0.5,max:4.5,interval:1,axisLabel:{formatter:v=>['','A','B','C','D'][v]||''}},yAxis:{type:'value',name:'职级',min:0.5,max:8.5,axisLabel:{formatter:v=>'P'+v}},series:[{type:'scatter',symbolSize:d=>10+d[2]*4,data:data,itemStyle:{color:p=>{const pf=p.data.value[1],lv=p.data.value[0]; if(pf===1&&lv<=3)return'#34c759'; if(pf>=3&&lv>=6)return'#ff3b30'; return'#a9c1f0';},opacity:.8},label:{show:true,position:'top',fontSize:10,formatter:p=>p.data.name}}]}}]
+    };
+  },
+
+  /* 17 薪酬绩效 */
+  salary_perf(){
+    const d={A:[],B:[],C:[],D:[]}; FILES.roster.rows.forEach(r=>{ if(d[r.performance]) d[r.performance].push(num(r.monthly_salary)); });
+    const avgs=['A','B','C','D'].map(p=>Math.round(avg(d[p])));
+    const allSal=FILES.roster.rows.map(r=>num(r.monthly_salary)).sort((a,b)=>a-b);
+    const p75=allSal[Math.floor(allSal.length*3/4)], p25=allSal[Math.floor(allSal.length/4)];
+    let highLow=0,lowHigh=0;
+    FILES.roster.rows.forEach(r=>{ const s=num(r.monthly_salary); if(s>=p75&&['C','D'].includes(r.performance))highLow++; if(s<=p25&&r.performance==='A')lowHigh++; });
+    return {html:`
+      <div class="card"><h2>薪酬绩效关联 <span class="no">钱花对人了吗</span></h2>
+        <div class="chart" id="c_salary_perf"></div>
+        <div class="conclusion"><h3>结论</h3>
+          <div class="metric-row">
+            <div class="metric"><div class="label">高薪低绩效</div><div class="value red">${highLow}人</div></div>
+            <div class="metric"><div class="label">低薪高绩效</div><div class="value green">${lowHigh}人</div></div>
+          </div>
+          <div class="alert-item"><span class="dot"></span>平均月薪：A ${avgs[0]} / B ${avgs[1]} / C ${avgs[2]} / D ${avgs[3]}。若 B、C 与 A 接近甚至反超，说明存在平均主义，薪酬未向高绩效倾斜。</div>
+        </div>
+      </div>`,
+      charts:[{id:'c_salary_perf',opt:singleBar(['A','B','C','D'],avgs,null,['#34c759','#0071e3','#ff9500','#ff3b30'])}]
+    };
+  },
+
+  /* 18 激励ROI */
+  roi(){
+    const d={}; FILES.eff.rows.forEach(r=>{ if(r.quarter==='Q3'||!d[r.department]){ const lab=num(r.labor_cost)/num(r.headcount); d[r.department]=lab?num(r.profit_per_capita)/lab:0; } });
+    const depts=Object.keys(d);
+    const rois=depts.map(x=>+d[x].toFixed(2));
+    return {html:`
+      <div class="card"><h2>激励ROI <span class="no">人均利润/人均成本</span></h2>
+        <div class="chart" id="c_roi"></div>
+        <div class="conclusion"><h3>该调薪 / 该控编</h3>
+          <div class="alert-item"><span class="dot"></span>${depts.map((x,i)=>`${x}：ROI ${rois[i]}`).join('、')}。ROI>1 投入产出为正（该调薪留人）；ROI<1 投入大于产出（该控编）；ROI<0 纯亏损。</div>
+        </div>
+      </div>`,
+      charts:[{id:'c_roi',opt:{tooltip:{trigger:'axis'},grid:{left:50,right:30,top:30,bottom:40},xAxis:{type:'category',data:depts},yAxis:{type:'value',name:'ROI'},series:[{type:'bar',data:rois,barWidth:30,itemStyle:{color:p=>p.value>=1?'#34c759':(p.value>=0?'#ff9500':'#ff3b30')},label:{show:true,position:'top'},markLine:{silent:true,symbol:'none',lineStyle:{type:'dashed',color:'#ff3b30'},label:{formatter:'盈亏线 1',color:'#ff3b30'},data:[{yAxis:1}]}}]}}]
+    };
+  },
+
+  /* 19 薪资分位 */
+  salary_pct(){
+    const rows=FILES.roster.rows.map(r=>({lv:r.job_level,dept:r.department,perf:r.performance,sal:num(r.monthly_salary),key:r.is_key_position}));
+    const lvSal={}; rows.forEach(r=>{ (lvSal[r.lv]=lvSal[r.lv]||[]).push(r.sal); });
+    const pctInLv=(lv,sal)=>{ const s=[...lvSal[lv]].sort((a,b)=>a-b); return +((s.filter(x=>x<sal).length/s.length)*100).toFixed(0); };
+    const targets=rows.filter(r=>r.perf==='A'&&r.key==='是').map(r=>({name:r.dept+'·'+r.lv,val:pctInLv(r.lv,r.sal),sal:r.sal})).sort((a,b)=>a.val-b.val);
+    const low=targets.filter(t=>t.val<50).length;
+    return {html:`
+      <div class="card"><h2>薪资分位 <span class="no">关键岗被挖角风险</span></h2>
+        <div class="chart" id="c_salary_pct"></div>
+        <div class="conclusion"><h3>该给谁加、加到多少</h3>
+          <div class="metric-row">
+            <div class="metric"><div class="label">关键岗高绩效中分位<50</div><div class="value red">${low} / ${targets.length}</div></div>
+          </div>
+          <div class="alert-item"><span class="dot"></span>${targets.map(t=>`${t.name}（分位 P${t.val}，${t.sal}元）`).join('；')}。分位<P50 的关键高绩效者建议补到 P60~P65 并配留任金。</div>
+        </div>
+      </div>`,
+      charts:[{id:'c_salary_pct',opt:{tooltip:{formatter:p=>p.data.name+'：分位 P'+p.data.value+'，'+p.data.sal+'元'},grid:{left:100,right:40,top:20,bottom:30},xAxis:{type:'value',name:'同职级分位',max:100},yAxis:{type:'category',data:targets.map(t=>t.name)},series:[{type:'bar',data:targets.map(t=>t.val),barWidth:14,itemStyle:{color:p=>p.value<50?'#ff3b30':(p.value<60?'#ff9500':'#34c759')},label:{show:true,position:'right',formatter:p=>'P'+p.value},markLine:{silent:true,symbol:'none',lineStyle:{type:'dashed',color:'#ff3b30'},label:{formatter:'风险线 P50',color:'#ff3b30'},data:[{xAxis:50}]}}]}}]
+    };
+  },
+
+  /* 20 一页纸方案 */
+  summary(){
+    // 复用各分析的关键指标
+    const costRatio={}; FILES.eff.rows.forEach(r=>{ costRatio[r.department]=costRatio[r.department]||{lab:0,rev:0}; costRatio[r.department].lab+=num(r.labor_cost); costRatio[r.department].rev+=num(r.revenue_per_capita)*num(r.headcount); });
+    const ratios=Object.keys(costRatio).map(d=>({d,ratio:costRatio[d].rev?costRatio[d].lab/costRatio[d].rev:null}));
+    const totalLab=sum(Object.values(costRatio).map(x=>x.lab)), totalRev=sum(Object.values(costRatio).map(x=>x.rev));
+    const overall=totalRev?+(totalLab/totalRev*100).toFixed(1):0;
+
+    const roi={}; FILES.eff.rows.forEach(r=>{ if(r.quarter==='Q3'||!roi[r.department]){ const lab=num(r.labor_cost)/num(r.headcount); roi[r.department]=lab?num(r.profit_per_capita)/lab:0; } });
+    const roiList=Object.keys(roi).map(d=>({d,v:roi[d]}));
+
+    return {html:`
+      <div class="card"><h2>一页纸方案 <span class="no">面向 HRD</span></h2>
+        <div class="banner"><div class="bt">① 人力成本总盘子</div><div class="bb">公司人力成本占营收 <b>${overall}%</b>（健康 30%~40% / 警戒 40%~50% / 超标 >50%）。${ratios.filter(x=>x.ratio>0.5).map(x=>`<b>${x.d}</b>（${(x.ratio*100).toFixed(1)}%）`).join('、')||'暂无超标部门'} 是拉高整体的关键。</div></div>
+        <div class="banner green"><div class="bt">② 该「加」的</div><div class="bb">ROI>1 的部门（${roiList.filter(x=>x.v>1).map(x=>x.d).join('、')||'无'}）值得加薪留人；关键岗高绩效中分位<50 的人群补到 P60~P65。</div></div>
+        <div class="banner red"><div class="bt">③ 该「砍」的</div><div class="bb">ROI<1 或 <0 的部门（${roiList.filter(x=>x.v<1).map(x=>`${x.d} ROI ${x.v.toFixed(2)}`).join('、')||'无'}）应控编冻扩；高薪低绩效人群做 PIP 或转岗。</div></div>
+        <div class="banner blue"><div class="bt">④ 数据支撑</div><div class="bb">以上每条均可回溯到上传的三份 CSV（成本占比、激励 ROI、薪酬绩效、薪资分位），非拍脑袋。</div></div>
+      </div>`
+    };
+  }
+};
+
+/* 辅助：找出离职率最高部门 */
+function maxDept(order,qs,dl,dc){
+  let best='',bv=-1;
+  order.forEach(d=>{ qs.forEach(q=>{ const v=pct(dl[d]?.[q]||0,dc[d]||1); if(v>bv){bv=v;best=d;} }); });
+  return best;
+}
+
+/* ==================== 图表配置 ==================== */
+function baseOpt(){ return {grid:{left:55,right:40,top:40,bottom:35},tooltip:{trigger:'axis'}}; }
+function dualAxis(cats,n1,n2,s1,s2,t1,t2){
+  const o=baseOpt(); o.legend={data:[n1,n2],top:0}; o.xAxis={type:'category',data:cats};
+  o.yAxis=[{type:'value',name:n1},{type:'value',name:n2}];
+  o.series=[{name:n1,type:t1,data:s1,itemStyle:{color:'#0071e3'}},{name:n2,type:t2,yAxisIndex:1,data:s2,itemStyle:{color:'#ff3b30'},symbolSize:8,lineStyle:{width:3}}];
+  return o;
+}
+function groupedBar(cats,series){
+  const o=baseOpt(); o.legend={top:0}; o.xAxis={type:'category',data:cats}; o.yAxis={type:'value'};
+  o.series=series.map((s,i)=>({name:s.name,type:'bar',data:s.data,itemStyle:{color:['#0071e3','#34c759','#ff9500','#bf5af2'][i%4]}}));
+  return o;
+}
+function singleBar(cats,vals,highlight,colors){
+  const o=baseOpt(); o.xAxis={type:'category',data:cats}; o.yAxis={type:'value'};
+  o.series=[{type:'bar',data:vals,barWidth:30,itemStyle:{color:colors?p=>colors[p.dataIndex]:p=>p.name===highlight?'#ff3b30':'#0071e3'},label:{show:true,position:'top'}}];
+  return o;
+}
+function heatmap(cols,rows,matrix,min,max){
+  const data=[]; rows.forEach((r,i)=>cols.forEach((c,j)=>{ data.push([j,i,matrix[i][['r1','r3','r6'][j]]]); }));
+  return {tooltip:{formatter:p=>rows[p.value[1]]+' · '+cols[p.value[0]]+'：'+p.value[2]+'%'},grid:{left:60,right:40,top:20,bottom:40},
+    xAxis:{type:'category',data:cols},yAxis:{type:'category',data:rows},
+    visualMap:{min,max,calculable:true,orient:'horizontal',left:'center',bottom:0,inRange:{color:['#34c759','#ffd60a','#ff9500','#ff3b30']}},
+    series:[{type:'heatmap',data,label:{show:true,formatter:p=>p.value[2]+'%'}}]};
+}
+function multiFunnel(data){
+  const series=data.map((d,i)=>({name:d.c,type:'funnel',left:(i*25)+'%',width:'22%',top:10,bottom:50,sort:'descending',gap:2,
+    label:{show:true,position:'inside',formatter:'{b}',color:'#fff',fontSize:11},
+    itemStyle:{color:['#0071e3','#34c759','#ff9500','#bf5af2'][i%4]},
+    data:[{name:'简历',value:d.resume},{name:'面试',value:d.iv},{name:'Offer',value:d.offer},{name:'到岗',value:d.hired}]}));
+  return {tooltip:{trigger:'item',formatter:'{b}: {c}'},series};
+}
+function quadrantScatter(pts,xmid,ymid){
+  return {tooltip:{formatter:p=>p.data.name+'：成本 '+p.data.value[0]+'元，留存 '+p.data.value[1]+'%，'+p.data.value[2]+'人'},
+    grid:{left:60,right:40,top:30,bottom:40},xAxis:{type:'value',name:'人均成本(元)'},yAxis:{type:'value',name:'6月留存%',max:100},
+    series:[{type:'scatter',symbolSize:d=>20+d[2]*1.2,data:pts,label:{show:true,position:'top',fontSize:11,formatter:p=>p.data.name},itemStyle:{color:'#0071e3'},
+      markLine:{silent:true,symbol:'none',lineStyle:{type:'dashed',color:'#c7c7cc'},data:[{xAxis:xmid},{yAxis:ymid}]}}]};
+}
+
+/* Render the dashboard markup with only the elements used by its templates. */
+function appendResult(board, html){
+  const template=document.createElement('template');
+  template.innerHTML=html;
+  for (const el of template.content.querySelectorAll('*')){
+    if (!['DIV','H2','H3','SPAN','B','P','TABLE','THEAD','TBODY','TR','TH','TD'].includes(el.tagName)){
+      el.remove();
+      continue;
+    }
+    for (const attr of [...el.attributes]){
+      if (attr.name!=='class' && attr.name!=='id') el.removeAttribute(attr.name);
+    }
+  }
+  board.append(template.content);
+}
+
+const demoButton=document.getElementById('btnDemo');
+demoButton.addEventListener('click',async ()=>{
+  demoButton.disabled=true;
+  try{
+    const data=await Promise.all(Object.values(FILES).map(async slot=>{
+      const response=await fetch('demo-data/'+encodeURIComponent(slot.name+'.csv'));
+      if (!response.ok) throw new Error('模拟数据加载失败');
+      const result=parseCSV(await response.text());
+      if (!result.rows.length) throw new Error('模拟数据为空');
+      return result;
+    }));
+    Object.values(FILES).forEach((slot,i)=>{
+      const n=i+1;
+      Object.assign(slot,data[i],{file:null});
+      document.getElementById('file'+n).value='';
+      document.getElementById('box'+n).classList.add('done');
+      document.getElementById('fname'+n).textContent='模拟数据 · '+data[i].rows.length+' 行';
+    });
+    const initial=['turnover','funnel','cost','retention','eff','level'];
+    document.querySelectorAll('.module').forEach(el=>{
+      const active=initial.includes(el.dataset.id);
+      moduleState[el.dataset.id]=active;
+      el.classList.toggle('on',active);
+    });
+    updateRunState();
+    document.getElementById('btnRun').click();
+  }catch(error){
+    const msg=document.getElementById('msg');
+    msg.textContent='模拟数据读取失败。可刷新重试，或手动选择 CSV。';
+    msg.className='msg err';
+  }finally{
+    demoButton.disabled=false;
+  }
+});
+
+/* ==================== 运行 ==================== */
+function checkDeps(mod){
+  return mod.need.every(k=>FILES[k].rows);
+}
+document.getElementById('btnRun').addEventListener('click',()=>{
+  const msg=document.getElementById('msg');
+  msg.className='msg';
+  const selected=MODULES.filter(m=>moduleState[m.id]);
+  if(selected.length===0){ msg.textContent='请先选择分析模块'; msg.className='msg err'; return; }
+  // 检查依赖
+  const missing=selected.filter(m=>!checkDeps(m));
+  if(missing.length>0){
+    msg.textContent='以下模块缺少数据文件：'+missing.map(m=>m.title).join('、');
+    msg.className='msg err'; return;
+  }
+  const board=document.getElementById('board');
+  board.innerHTML='';
+  selected.forEach(m=>{
+    try{
+      const res=ANALYSERS[m.id]();
+      appendResult(board,res.html);
+      (res.charts||[]).forEach(c=>{
+        const el=document.getElementById(c.id);
+        if(el&&window.echarts){ const ch=echarts.init(el); ch.setOption({...c.opt,tooltip:{...c.opt.tooltip,renderMode:'richText'}}); }
+      });
+    }catch(e){
+      const error=document.createElement('p');
+      error.className='msg err';
+      error.textContent=m.title+'分析出错：'+e.message;
+      board.append(error);
+    }
+  });
+  msg.textContent='已生成 '+selected.length+' 个分析板块';
+  msg.className='msg ok';
+  board.scrollIntoView({behavior:'smooth'});
+});
+
+document.getElementById('btnClear').addEventListener('click',()=>{
+  ['roster','flow','eff'].forEach(k=>{ FILES[k].rows=null; FILES[k].cols=null; });
+  ['file1','file2','file3'].forEach(id=>document.getElementById(id).value='');
+  ['box1','box2','box3'].forEach(id=>document.getElementById(id).classList.remove('done'));
+  ['fname1','fname2','fname3'].forEach(id=>document.getElementById(id).textContent='');
+  ['hint1','hint2','hint3'].forEach(id=>{ const h=document.getElementById(id); h.style.color=''; });
+  Object.keys(moduleState).forEach(k=>moduleState[k]=false);
+  document.querySelectorAll('.module').forEach(m=>m.classList.remove('on'));
+  document.getElementById('board').innerHTML='';
+  document.getElementById('msg').textContent='';
+  updateRunState();
+});
+</script>
+</body>
+</html>
